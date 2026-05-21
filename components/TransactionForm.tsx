@@ -5,7 +5,7 @@ import { Plus, X } from 'lucide-react'
 import { Transaction, TransactionType, EXPENSE_CATEGORIES, INCOME_CATEGORIES, Category } from '@/lib/types'
 
 interface Props {
-  onAdd: (data: Omit<Transaction, 'id' | 'createdAt'>) => void
+  onAdd: (data: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>
 }
 
 const today = new Date().toISOString().split('T')[0]
@@ -18,6 +18,7 @@ export default function TransactionForm({ onAdd }: Props) {
   const [category, setCategory] = useState<Category>('Alimentação')
   const [date, setDate] = useState(today)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const categories = type === 'expense' ? EXPENSE_CATEGORIES : INCOME_CATEGORIES
 
@@ -26,7 +27,7 @@ export default function TransactionForm({ onAdd }: Props) {
     setCategory(newType === 'expense' ? 'Alimentação' : 'Salário')
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
@@ -44,13 +45,20 @@ export default function TransactionForm({ onAdd }: Props) {
       return
     }
 
-    onAdd({ description: description.trim(), amount: parsedAmount, type, category, date })
-    setDescription('')
-    setAmount('')
-    setType('expense')
-    setCategory('Alimentação')
-    setDate(today)
-    setOpen(false)
+    try {
+      setLoading(true)
+      await onAdd({ description: description.trim(), amount: parsedAmount, type, category, date })
+      setDescription('')
+      setAmount('')
+      setType('expense')
+      setCategory('Alimentação')
+      setDate(today)
+      setOpen(false)
+    } catch {
+      setError('Erro ao salvar. Tente novamente.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -187,9 +195,10 @@ export default function TransactionForm({ onAdd }: Props) {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors"
+                  disabled={loading}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Adicionar
+                  {loading ? 'Salvando...' : 'Adicionar'}
                 </button>
               </div>
             </form>

@@ -24,8 +24,9 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setTransactions(loadTransactions())
-    setMounted(true)
+    loadTransactions()
+      .then(setTransactions)
+      .finally(() => setMounted(true))
   }, [])
 
   if (!mounted) {

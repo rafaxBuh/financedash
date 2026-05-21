@@ -29,16 +29,19 @@ export default function TransacoesPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
   useEffect(() => {
-    setTransactions(loadTransactions())
-    setMounted(true)
+    loadTransactions()
+      .then(setTransactions)
+      .finally(() => setMounted(true))
   }, [])
 
-  function handleAdd(data: Omit<Transaction, 'id' | 'createdAt'>) {
-    setTransactions((prev) => addTransaction(prev, data))
+  async function handleAdd(data: Omit<Transaction, 'id' | 'createdAt'>) {
+    const newTransaction = await addTransaction(data)
+    setTransactions((prev) => [newTransaction, ...prev])
   }
 
-  function handleDelete(id: string) {
-    setTransactions((prev) => deleteTransaction(prev, id))
+  async function handleDelete(id: string) {
+    await deleteTransaction(id)
+    setTransactions((prev) => prev.filter((t) => t.id !== id))
   }
 
   const availableMonths = useMemo(() => getAvailableMonths(transactions), [transactions])
