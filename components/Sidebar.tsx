@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, ArrowLeftRight, TrendingUp } from 'lucide-react'
+import { useSession, signOut } from 'next-auth/react'
+import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -11,6 +12,9 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+
+  if (pathname === '/login') return null
 
   return (
     <aside className="w-60 min-h-screen bg-surface border-r border-border flex flex-col">
@@ -46,8 +50,19 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-6 py-4 border-t border-border">
-        <p className="text-text-muted text-xs">v1.0.0</p>
+      <div className="px-4 py-4 border-t border-border space-y-2">
+        {session?.user?.email && (
+          <p className="text-text-muted text-xs truncate px-2" title={session.user.email}>
+            {session.user.email}
+          </p>
+        )}
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="flex items-center gap-2 w-full px-3 py-2 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg text-sm font-medium transition-colors"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          Sair
+        </button>
       </div>
     </aside>
   )

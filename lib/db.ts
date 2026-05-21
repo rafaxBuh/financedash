@@ -23,4 +23,12 @@ export async function initDB() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+  await sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
 }
