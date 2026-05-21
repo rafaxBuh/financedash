@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2 } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/transacoes', label: 'Transações', icon: ArrowLeftRight },
+  { href: '/categorias', label: 'Categorias', icon: Tag },
+  { href: '/contas', label: 'Contas Bancárias', icon: Building2 },
 ]
 
 export default function Sidebar() {

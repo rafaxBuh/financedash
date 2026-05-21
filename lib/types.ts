@@ -16,7 +16,7 @@ export type IncomeCategory =
   | 'Investimentos'
   | 'Outros'
 
-export type Category = ExpenseCategory | IncomeCategory
+export type Category = string
 
 export interface Transaction {
   id: string

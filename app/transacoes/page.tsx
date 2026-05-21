@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { Search, SlidersHorizontal } from 'lucide-react'
-import { Transaction, TransactionType, EXPENSE_CATEGORIES, INCOME_CATEGORIES, Category } from '@/lib/types'
+import { Transaction, TransactionType, Category } from '@/lib/types'
 import { loadTransactions, addTransaction, deleteTransaction } from '@/lib/storage'
 import {
   sortTransactionsByDate,
@@ -19,6 +19,7 @@ type SortOrder = 'desc' | 'asc'
 
 export default function TransacoesPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [dbCategories, setDbCategories] = useState<{ name: string; type: string }[]>([])
   const [mounted, setMounted] = useState(false)
 
   // Filters
@@ -29,9 +30,13 @@ export default function TransacoesPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
   useEffect(() => {
-    loadTransactions()
-      .then(setTransactions)
-      .finally(() => setMounted(true))
+    Promise.all([
+      loadTransactions(),
+      fetch('/api/categories').then((r) => r.json()),
+    ]).then(([txs, cats]) => {
+      setTransactions(txs)
+      setDbCategories(cats)
+    }).finally(() => setMounted(true))
   }, [])
 
   async function handleAdd(data: Omit<Transaction, 'id' | 'createdAt'>) {
@@ -47,10 +52,10 @@ export default function TransacoesPage() {
   const availableMonths = useMemo(() => getAvailableMonths(transactions), [transactions])
 
   const allCategories = useMemo(() => {
-    if (filterType === 'income') return INCOME_CATEGORIES as readonly string[]
-    if (filterType === 'expense') return EXPENSE_CATEGORIES as readonly string[]
-    return [...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES] as readonly string[]
-  }, [filterType])
+    if (filterType === 'income') return dbCategories.filter((c) => c.type === 'income').map((c) => c.name)
+    if (filterType === 'expense') return dbCategories.filter((c) => c.type === 'expense').map((c) => c.name)
+    return dbCategories.map((c) => c.name)
+  }, [filterType, dbCategories])
 
   const filtered = useMemo(() => {
     let result = [...transactions]
