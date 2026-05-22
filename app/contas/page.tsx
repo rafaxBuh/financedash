@@ -44,6 +44,7 @@ export default function ContasPage() {
 
       const widget = new window.PluggyConnect({
         connectToken: token,
+        includeSandbox: true,
         onSuccess: async ({ item }: { item: { id: string; connector?: { name?: string } } }) => {
           await fetch('/api/pluggy/accounts', {
             method: 'POST',
@@ -98,7 +99,7 @@ export default function ContasPage() {
   return (
     <>
       <Script
-        src="https://cdn.pluggy.ai/pluggy-connect/v2/pluggy-connect.js"
+        src="https://cdn.pluggy.ai/connect/v2/pluggy-connect.js"
         onReady={() => setScriptReady(true)}
       />
 
