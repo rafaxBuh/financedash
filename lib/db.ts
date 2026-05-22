@@ -89,6 +89,16 @@ async function _runInit() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+  await sql`
+    CREATE TABLE IF NOT EXISTS goal_contributions (
+      id TEXT PRIMARY KEY,
+      goal_id TEXT NOT NULL REFERENCES goals(id) ON DELETE CASCADE,
+      amount NUMERIC(12, 2) NOT NULL,
+      note TEXT,
+      date DATE NOT NULL DEFAULT CURRENT_DATE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
 
   // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
   const adminEmail = process.env.ADMIN_EMAIL

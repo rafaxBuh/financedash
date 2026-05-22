@@ -4,7 +4,6 @@ import MetasClient from './MetasClient'
 import {
   getTotalIncome,
   getTotalExpenses,
-  getBalance,
   getCurrentMonthTransactions,
 } from '@/lib/utils'
 
@@ -26,7 +25,11 @@ export interface GoalWithProgress extends Goal {
   status: 'ok' | 'warning' | 'danger' | 'completed'
 }
 
-function calcProgress(goal: Goal, transactions: Transaction[]): GoalWithProgress {
+function calcProgress(
+  goal: Goal,
+  transactions: Transaction[],
+  contributions: Record<string, number>,
+): GoalWithProgress {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
@@ -35,7 +38,7 @@ function calcProgress(goal: Goal, transactions: Transaction[]): GoalWithProgress
   let current = 0
 
   if (goal.type === 'savings') {
-    current = getBalance(transactions)
+    current = contributions[goal.id] ?? 0
   } else if (goal.type === 'expense_limit') {
     const filtered = goal.category
       ? monthTxs.filter((t) => t.type === 'expense' && t.category === goal.category)
@@ -69,7 +72,7 @@ export default async function MetasPage() {
   await initDB()
   const sql = getDB()
 
-  const [goalRows, txRows, catRows] = await Promise.all([
+  const [goalRows, txRows, catRows, contribRows] = await Promise.all([
     sql`
       SELECT id, name, type, target_amount AS "targetAmount",
              category, to_char(deadline, 'YYYY-MM-DD') AS deadline,
@@ -83,13 +86,22 @@ export default async function MetasPage() {
       FROM transactions ORDER BY date DESC
     `,
     sql`SELECT name, type FROM categories ORDER BY type, name`,
+    sql`
+      SELECT goal_id AS "goalId", COALESCE(SUM(amount), 0) AS total
+      FROM goal_contributions
+      GROUP BY goal_id
+    `,
   ])
 
   const goals = goalRows as Goal[]
   const transactions: Transaction[] = txRows.map((r) => ({ ...r, amount: Number(r.amount) })) as Transaction[]
   const categories = catRows as { name: string; type: string }[]
+  const contributions: Record<string, number> = {}
+  for (const r of contribRows) {
+    contributions[r.goalId] = Number(r.total)
+  }
 
-  const goalsWithProgress = goals.map((g) => calcProgress(g, transactions))
+  const goalsWithProgress = goals.map((g) => calcProgress(g, transactions, contributions))
 
   return (
     <MetasClient

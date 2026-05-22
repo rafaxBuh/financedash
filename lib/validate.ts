@@ -38,6 +38,18 @@ export const goalSchema = z.object({
     .optional(),
 })
 
+export const goalContributionSchema = z.object({
+  amount: z
+    .number('Valor inválido')
+    .positive('Valor deve ser maior que zero')
+    .max(999_999_999, 'Valor muito alto'),
+  note: z.string().trim().max(200).optional(),
+  date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida')
+    .optional(),
+})
+
 export function safeId(): string {
   return crypto.randomUUID()
 }

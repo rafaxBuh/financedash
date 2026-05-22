@@ -19,7 +19,11 @@ import { Goal, GoalWithProgress } from './metas/page'
 
 export const dynamic = 'force-dynamic'
 
-function calcProgress(goal: Goal, transactions: Transaction[]): GoalWithProgress {
+function calcProgress(
+  goal: Goal,
+  transactions: Transaction[],
+  contributions: Record<string, number>,
+): GoalWithProgress {
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
@@ -27,7 +31,7 @@ function calcProgress(goal: Goal, transactions: Transaction[]): GoalWithProgress
 
   let current = 0
   if (goal.type === 'savings') {
-    current = getBalance(transactions)
+    current = contributions[goal.id] ?? 0
   } else if (goal.type === 'expense_limit') {
     const filtered = goal.category
       ? monthTxs.filter((t) => t.type === 'expense' && t.category === goal.category)
@@ -59,7 +63,7 @@ export default async function DashboardPage() {
   await initDB()
   const sql = getDB()
 
-  const [txRows, goalRows] = await Promise.all([
+  const [txRows, goalRows, contribRows] = await Promise.all([
     sql`
       SELECT id, description, amount, type, category,
              to_char(date, 'YYYY-MM-DD') AS date,
@@ -72,10 +76,19 @@ export default async function DashboardPage() {
              created_at AS "createdAt"
       FROM goals ORDER BY created_at DESC LIMIT 4
     `,
+    sql`
+      SELECT goal_id AS "goalId", COALESCE(SUM(amount), 0) AS total
+      FROM goal_contributions
+      GROUP BY goal_id
+    `,
   ])
 
   const transactions: Transaction[] = txRows.map((r) => ({ ...r, amount: Number(r.amount) })) as Transaction[]
-  const goals = (goalRows as Goal[]).map((g) => calcProgress(g, transactions))
+  const contributions: Record<string, number> = {}
+  for (const r of contribRows) {
+    contributions[r.goalId] = Number(r.total)
+  }
+  const goals = (goalRows as Goal[]).map((g) => calcProgress(g, transactions, contributions))
 
   const currentMonth = getCurrentMonthTransactions(transactions)
   const totalIncome = getTotalIncome(currentMonth)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Target, TrendingUp, TrendingDown, PiggyBank, X } from 'lucide-react'
+import { Plus, Trash2, Target, TrendingUp, TrendingDown, PiggyBank, X, PlusCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { GoalWithProgress } from './page'
 
@@ -42,14 +42,22 @@ export default function MetasClient({ initialGoals, categories }: Props) {
   const [goals, setGoals] = useState<GoalWithProgress[]>(initialGoals)
   const [showForm, setShowForm] = useState(false)
 
-  // Form state
+  // Goal form state
   const [name, setName] = useState('')
   const [type, setType] = useState<'savings' | 'expense_limit' | 'income_target'>('savings')
   const [targetAmount, setTargetAmount] = useState('')
   const [category, setCategory] = useState('')
   const [deadline, setDeadline] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [formError, setFormError] = useState('')
+  const [formLoading, setFormLoading] = useState(false)
+
+  // Contribution modal state
+  const [contributeGoal, setContributeGoal] = useState<GoalWithProgress | null>(null)
+  const [contribAmount, setContribAmount] = useState('')
+  const [contribNote, setContribNote] = useState('')
+  const [contribDate, setContribDate] = useState(new Date().toISOString().split('T')[0])
+  const [contribError, setContribError] = useState('')
+  const [contribLoading, setContribLoading] = useState(false)
 
   const needsCategory = type === 'expense_limit' || type === 'income_target'
   const filteredCategories = categories.filter((c) =>
@@ -58,12 +66,12 @@ export default function MetasClient({ initialGoals, categories }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setError('')
+    setFormError('')
     const amount = parseFloat(targetAmount.replace(',', '.'))
-    if (!name.trim()) { setError('Informe o nome da meta.'); return }
-    if (isNaN(amount) || amount <= 0) { setError('Informe um valor válido.'); return }
+    if (!name.trim()) { setFormError('Informe o nome da meta.'); return }
+    if (isNaN(amount) || amount <= 0) { setFormError('Informe um valor válido.'); return }
 
-    setLoading(true)
+    setFormLoading(true)
     try {
       const res = await fetch('/api/goals', {
         method: 'POST',
@@ -78,22 +86,62 @@ export default function MetasClient({ initialGoals, categories }: Props) {
       })
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error ?? 'Erro ao criar meta.')
+        setFormError(data.error ?? 'Erro ao criar meta.')
         return
       }
       setName(''); setTargetAmount(''); setCategory(''); setDeadline(''); setType('savings')
       setShowForm(false)
       router.refresh()
     } catch {
-      setError('Erro ao criar meta.')
+      setFormError('Erro ao criar meta.')
     } finally {
-      setLoading(false)
+      setFormLoading(false)
     }
   }
 
   async function handleDelete(id: string) {
     await fetch(`/api/goals/${id}`, { method: 'DELETE' })
     setGoals((prev) => prev.filter((g) => g.id !== id))
+  }
+
+  function openContribute(goal: GoalWithProgress) {
+    setContributeGoal(goal)
+    setContribAmount('')
+    setContribNote('')
+    setContribDate(new Date().toISOString().split('T')[0])
+    setContribError('')
+  }
+
+  async function handleContribute(e: React.FormEvent) {
+    e.preventDefault()
+    if (!contributeGoal) return
+    setContribError('')
+    const amount = parseFloat(contribAmount.replace(',', '.'))
+    if (isNaN(amount) || amount <= 0) { setContribError('Informe um valor válido.'); return }
+
+    setContribLoading(true)
+    try {
+      const res = await fetch(`/api/goals/${contributeGoal.id}/contributions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          note: contribNote.trim() || undefined,
+          date: contribDate,
+        }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setContribError(data.error ?? 'Erro ao registrar contribuição.')
+        return
+      }
+      setContributeGoal(null)
+      router.refresh()
+    } catch {
+      setContribError('Erro ao registrar contribuição.')
+    } finally {
+      setContribLoading(false)
+    }
   }
 
   return (
@@ -163,6 +211,15 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                     }`}>
                       {STATUS_LABELS[goal.status]}
                     </span>
+                    {goal.type === 'savings' && (
+                      <button
+                        onClick={() => openContribute(goal)}
+                        title="Contribuir para esta meta"
+                        className="p-1.5 hover:bg-accent/10 rounded-lg text-text-muted hover:text-accent transition-colors"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(goal.id)}
                       className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-danger/10 rounded-lg text-text-muted hover:text-danger"
@@ -176,7 +233,7 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-text-muted">
-                      {goal.type === 'expense_limit' ? 'Gasto' : 'Atual'}:{' '}
+                      {goal.type === 'expense_limit' ? 'Gasto' : 'Acumulado'}:{' '}
                       <span className="text-text-primary font-medium">{formatCurrency(goal.current)}</span>
                     </span>
                     <span className="text-text-muted">
@@ -204,14 +261,14 @@ export default function MetasClient({ initialGoals, categories }: Props) {
         </div>
       )}
 
-      {/* Modal form */}
+      {/* New goal modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="bg-surface border border-border rounded-xl w-full max-w-md shadow-2xl">
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <h2 className="text-text-primary font-semibold">Nova Meta</h2>
               <button
-                onClick={() => { setShowForm(false); setError('') }}
+                onClick={() => { setShowForm(false); setFormError('') }}
                 className="text-text-muted hover:text-text-primary transition-colors p-1 rounded-lg hover:bg-surface-2"
               >
                 <X className="w-4 h-4" />
@@ -297,24 +354,108 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                 />
               </div>
 
-              {error && (
-                <p className="text-danger text-sm bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{error}</p>
+              {formError && (
+                <p className="text-danger text-sm bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{formError}</p>
               )}
 
               <div className="flex gap-3 pt-1">
                 <button
                   type="button"
-                  onClick={() => { setShowForm(false); setError('') }}
+                  onClick={() => { setShowForm(false); setFormError('') }}
                   className="flex-1 py-2.5 text-sm font-medium text-text-secondary bg-surface-2 hover:bg-border rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={formLoading}
                   className="flex-1 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors disabled:opacity-60"
                 >
-                  {loading ? 'Salvando...' : 'Criar Meta'}
+                  {formLoading ? 'Salvando...' : 'Criar Meta'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Contribute modal */}
+      {contributeGoal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-surface border border-border rounded-xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <div>
+                <h2 className="text-text-primary font-semibold">Contribuir para meta</h2>
+                <p className="text-text-muted text-xs mt-0.5">{contributeGoal.name}</p>
+              </div>
+              <button
+                onClick={() => setContributeGoal(null)}
+                className="text-text-muted hover:text-text-primary transition-colors p-1 rounded-lg hover:bg-surface-2"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleContribute} className="px-6 py-5 space-y-4">
+              <div className="bg-surface-2 rounded-lg px-4 py-3 flex justify-between text-xs">
+                <span className="text-text-muted">Acumulado atual</span>
+                <span className="text-text-primary font-medium">{formatCurrency(contributeGoal.current)}</span>
+              </div>
+
+              <div>
+                <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Valor (R$)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={contribAmount}
+                  onChange={(e) => setContribAmount(e.target.value)}
+                  placeholder="0,00"
+                  autoFocus
+                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Data</label>
+                <input
+                  type="date"
+                  value={contribDate}
+                  onChange={(e) => setContribDate(e.target.value)}
+                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent [color-scheme:dark]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">
+                  Observação <span className="text-text-muted normal-case font-normal">(opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={contribNote}
+                  onChange={(e) => setContribNote(e.target.value)}
+                  placeholder="Ex: Depósito mensal"
+                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+                />
+              </div>
+
+              {contribError && (
+                <p className="text-danger text-sm bg-danger/10 border border-danger/20 rounded-lg px-3 py-2">{contribError}</p>
+              )}
+
+              <div className="flex gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setContributeGoal(null)}
+                  className="flex-1 py-2.5 text-sm font-medium text-text-secondary bg-surface-2 hover:bg-border rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={contribLoading}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-accent hover:bg-accent-hover rounded-lg transition-colors disabled:opacity-60"
+                >
+                  {contribLoading ? 'Salvando...' : 'Confirmar'}
                 </button>
               </div>
             </form>
