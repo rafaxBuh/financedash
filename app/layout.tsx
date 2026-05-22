@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
 import SessionProvider from '@/components/SessionProvider'
+import CursorScript from '@/components/CursorScript'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,6 +20,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${inter.className} bg-background text-text-primary min-h-screen relative`}>
+        <CursorScript />
+        
         {/* Custom Cursors */}
         <div id="cursor" className="hidden lg:block"></div>
         <div id="cursor-ring" className="hidden lg:block"></div>
