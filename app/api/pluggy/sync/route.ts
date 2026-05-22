@@ -48,7 +48,7 @@ export async function POST() {
           const type: 'income' | 'expense' = tx.type === 'CREDIT' ? 'income' : 'expense'
           const category = mapCategory(tx.category, type)
           const txId = `pluggy_${tx.id}`
-          const txDate = tx.date.split('T')[0]
+          const txDate = format(new Date(tx.date), 'yyyy-MM-dd')
 
           const existing = await sql`SELECT id FROM transactions WHERE id = ${txId} LIMIT 1`
           if (existing.length > 0) continue

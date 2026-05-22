@@ -40,7 +40,7 @@ export default function ContasPage() {
     try {
       const res = await fetch('/api/pluggy/connect-token', { method: 'POST' })
       if (!res.ok) throw new Error()
-      const { token } = await res.json()
+      const { accessToken: token } = await res.json()
 
       const widget = new window.PluggyConnect({
         connectToken: token,
