@@ -1,17 +1,33 @@
-import { neon } from '@neondatabase/serverless'
+import { neon, NeonQueryFunction } from '@neondatabase/serverless'
 
-function createSQL() {
-  const url = process.env.DATABASE_URL
-  if (!url) throw new Error('DATABASE_URL environment variable is not set')
-  return neon(url)
+// Cache the SQL client per process
+let _sql: NeonQueryFunction<false, false> | null = null
+
+export function getDB(): NeonQueryFunction<false, false> {
+  if (!_sql) {
+    const url = process.env.DATABASE_URL
+    if (!url) throw new Error('DATABASE_URL environment variable is not set')
+    _sql = neon(url)
+  }
+  return _sql
 }
 
-export function getDB() {
-  return createSQL()
+// Run initDB only once per server process
+let _initPromise: Promise<void> | null = null
+
+export function initDB(): Promise<void> {
+  if (!_initPromise) {
+    _initPromise = _runInit().catch((err) => {
+      _initPromise = null // allow retry on failure
+      throw err
+    })
+  }
+  return _initPromise
 }
 
-export async function initDB() {
+async function _runInit() {
   const sql = getDB()
+
   await sql`
     CREATE TABLE IF NOT EXISTS transactions (
       id TEXT PRIMARY KEY,
@@ -50,7 +66,6 @@ export async function initDB() {
     )
   `
 
-  // Seed default categories
   const defaultExpense = ['Alimentação','Transporte','Saúde','Lazer','Moradia','Educação','Compras','Outros']
   const defaultIncome  = ['Salário','Freelance','Investimentos','Outros']
   for (const name of defaultExpense) {
