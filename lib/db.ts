@@ -78,6 +78,18 @@ async function _runInit() {
     await sql`INSERT INTO categories (id, name, type) VALUES (${id}, ${name}, 'income') ON CONFLICT DO NOTHING`
   }
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS goals (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      type TEXT NOT NULL CHECK (type IN ('savings', 'expense_limit', 'income_target')),
+      target_amount NUMERIC(12, 2) NOT NULL,
+      category TEXT,
+      deadline DATE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
   // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
   const adminEmail = process.env.ADMIN_EMAIL
   const adminPassword = process.env.ADMIN_PASSWORD

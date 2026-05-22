@@ -4,11 +4,12 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2, Menu, X } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2, Menu, X, Target } from 'lucide-react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/transacoes', label: 'Transações', icon: ArrowLeftRight },
+  { href: '/metas', label: 'Metas', icon: Target },
   { href: '/categorias', label: 'Categorias', icon: Tag },
   { href: '/contas', label: 'Contas Bancárias', icon: Building2 },
 ]
