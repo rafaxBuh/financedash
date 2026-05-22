@@ -20,12 +20,11 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className} bg-background text-text-primary min-h-screen`}>
         <SessionProvider>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              {children}
-            </main>
-          </div>
+          <Sidebar />
+          {/* Desktop: offset by sidebar width. Mobile: offset by top bar height */}
+          <main className="lg:pl-60 pt-14 lg:pt-0 min-h-screen overflow-auto">
+            {children}
+          </main>
         </SessionProvider>
       </body>
     </html>
