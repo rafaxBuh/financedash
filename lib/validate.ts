@@ -3,7 +3,7 @@ import { z } from 'zod'
 export const transactionSchema = z.object({
   description: z.string().trim().min(1, 'Descrição obrigatória').max(200, 'Descrição muito longa'),
   amount: z
-    .number('Valor inválido')
+    .number({ invalid_type_error: 'Valor inválido', required_error: 'Valor inválido' })
     .positive('Valor deve ser maior que zero')
     .max(999_999_999, 'Valor muito alto'),
   type: z.enum(['income', 'expense']),
@@ -27,7 +27,7 @@ export const goalSchema = z.object({
   name: z.string().trim().min(1, 'Nome obrigatório').max(100, 'Nome muito longo'),
   type: z.enum(['savings', 'expense_limit', 'income_target']),
   target_amount: z
-    .number('Valor inválido')
+    .number({ invalid_type_error: 'Valor inválido', required_error: 'Valor inválido' })
     .positive('Valor deve ser maior que zero')
     .max(999_999_999, 'Valor muito alto'),
   category: z.string().trim().max(100).nullable().optional(),
@@ -40,7 +40,7 @@ export const goalSchema = z.object({
 
 export const goalContributionSchema = z.object({
   amount: z
-    .number('Valor inválido')
+    .number({ invalid_type_error: 'Valor inválido', required_error: 'Valor inválido' })
     .positive('Valor deve ser maior que zero')
     .max(999_999_999, 'Valor muito alto'),
   note: z.string().trim().max(200).optional(),
