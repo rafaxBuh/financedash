@@ -3,8 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --background: #0f172a;
-  --surface: #1e293b;
+  --background: #030303;
+  --surface: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -18,39 +19,100 @@ input, textarea, [contenteditable] {
   -webkit-user-select: text;
 }
 
-html,
+html {
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #FF5A00 #030303;
+}
+
 body {
-  background-color: #0f172a;
-  color: #f1f5f9;
+  background-color: var(--background);
+  color: #ffffff;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 3px;
+  background: #FF5A00;
+  border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+/* Glass panel utility class */
+.glass-panel {
+  background: var(--surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
 }
 
-/* Date input calendar icon color */
+/* Interactive Cursor */
+@media (pointer: fine) {
+  body {
+    cursor: none;
+  }
+
+  a, button, input, select {
+    cursor: none;
+  }
+
+  #cursor {
+    width: 12px;
+    height: 12px;
+    background: #FF5A00;
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s, height 0.2s;
+    will-change: left, top;
+  }
+
+  #cursor-ring {
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid rgba(255, 90, 0, 0.5);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    will-change: left, top;
+    transition: width 0.2s, height 0.2s;
+  }
+
+  body:has(a:hover) #cursor,
+  body:has(button:hover) #cursor {
+    width: 20px;
+    height: 20px;
+  }
+
+  body:has(a:hover) #cursor-ring,
+  body:has(button:hover) #cursor-ring {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Base element overrides */
 input[type='date']::-webkit-calendar-picker-indicator {
-  filter: invert(0.6);
-  cursor: pointer;
+  filter: invert(1);
+  cursor: none;
 }
 
-/* Select arrow color */
 select option {
-  background-color: #1e293b;
-  color: #f1f5f9;
+  background-color: #111111;
+  color: #ffffff;
 }
+

@@ -14,7 +14,7 @@ export async function DELETE(
     const id = params.id?.trim()
     if (!id) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
 
-    await sql`DELETE FROM transactions WHERE id = ${id}`
+    await sql`UPDATE transactions SET deleted = TRUE WHERE id = ${id}`
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

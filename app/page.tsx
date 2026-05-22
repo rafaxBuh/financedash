@@ -68,7 +68,7 @@ export default async function DashboardPage() {
       SELECT id, description, amount, type, category,
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
-      FROM transactions ORDER BY date DESC, created_at DESC
+      FROM transactions WHERE deleted = FALSE ORDER BY date DESC, created_at DESC
     `,
     sql`
       SELECT id, name, type, target_amount AS "targetAmount",
@@ -99,10 +99,10 @@ export default async function DashboardPage() {
   const recent = sortTransactionsByDate(transactions).slice(0, 5)
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Dashboard</h1>
-        <p className="text-text-muted text-sm mt-1">Visão geral das suas finanças</p>
+    <div className="p-6 lg:p-10 space-y-8 animate-fade-up">
+      <div className="mb-8">
+        <h1 className="text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-2">Dashboard</h1>
+        <p className="text-text-secondary text-base">Bem-vindo de volta! Aqui está a visão geral das suas finanças.</p>
       </div>
 
       <DashboardCards balance={balance} totalIncome={totalIncome} totalExpenses={totalExpenses} />
@@ -111,11 +111,11 @@ export default async function DashboardPage() {
 
       {goals.length > 0 && <GoalsSummary goals={goals} />}
 
-      <div className="bg-surface border border-border rounded-xl p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-text-primary font-semibold text-sm">Transações Recentes</h2>
-          <Link href="/transacoes" className="text-accent hover:text-accent-hover text-xs flex items-center gap-1 transition-colors">
-            Ver todas <ArrowRight className="w-3 h-3" />
+      <div className="glass-panel rounded-3xl p-6 lg:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-white font-bold text-xl tracking-tight">Transações Recentes</h2>
+          <Link href="/transacoes" className="text-accent hover:text-accent-hover text-sm font-semibold flex items-center gap-2 transition-all hover:translate-x-1">
+            Ver todas <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
         <TransactionList transactions={recent} />
@@ -123,3 +123,4 @@ export default async function DashboardPage() {
     </div>
   )
 }
+

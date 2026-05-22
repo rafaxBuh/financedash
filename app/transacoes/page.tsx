@@ -14,6 +14,7 @@ export default async function TransacoesPage() {
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
       FROM transactions
+      WHERE deleted = FALSE
       ORDER BY date DESC, created_at DESC
     `,
     sql`SELECT id, name, type FROM categories ORDER BY type, name`,

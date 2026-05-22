@@ -37,9 +37,12 @@ async function _runInit() {
       type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
       category TEXT NOT NULL,
       date DATE NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      deleted BOOLEAN NOT NULL DEFAULT FALSE
     )
   `
+  // Migrate existing tables that may not have the deleted column
+  await sql`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS deleted BOOLEAN NOT NULL DEFAULT FALSE`
   await sql`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,

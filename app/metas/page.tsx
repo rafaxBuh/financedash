@@ -83,7 +83,7 @@ export default async function MetasPage() {
       SELECT id, description, amount, type, category,
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
-      FROM transactions ORDER BY date DESC
+      FROM transactions WHERE deleted = FALSE ORDER BY date DESC
     `,
     sql`SELECT name, type FROM categories ORDER BY type, name`,
     sql`

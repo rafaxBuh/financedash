@@ -54,6 +54,7 @@ export async function GET() {
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
       FROM transactions
+      WHERE deleted = FALSE
       ORDER BY date DESC, created_at DESC
     `
 
@@ -70,6 +71,7 @@ export async function GET() {
                to_char(date, 'YYYY-MM-DD') AS date,
                created_at AS "createdAt"
         FROM transactions
+        WHERE deleted = FALSE
         ORDER BY date DESC, created_at DESC
       `
       return NextResponse.json(seeded)
