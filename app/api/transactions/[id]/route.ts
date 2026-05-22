@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDB } from '@/lib/db'
+import { requireSession } from '@/lib/api-auth'
 
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const { error } = await requireSession()
+  if (error) return error
+
   try {
     const sql = getDB()
-    const { id } = params
+    const id = params.id?.trim()
+    if (!id) return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
 
     await sql`DELETE FROM transactions WHERE id = ${id}`
-
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('DELETE /api/transactions/[id] error:', error)
-    return NextResponse.json({ error: 'Erro ao deletar transação' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

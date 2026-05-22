@@ -1,35 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDB, initDB } from '@/lib/db'
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-}
+import { requireSession } from '@/lib/api-auth'
+import { categorySchema, safeId } from '@/lib/validate'
 
 export async function GET() {
+  const { error } = await requireSession()
+  if (error) return error
+
   try {
     await initDB()
     const sql = getDB()
     const rows = await sql`SELECT id, name, type FROM categories ORDER BY type, name`
     return NextResponse.json(rows)
-  } catch (error) {
-    console.error('GET /api/categories error:', error)
-    return NextResponse.json({ error: 'Erro ao buscar categorias' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const { error } = await requireSession()
+  if (error) return error
+
   try {
     await initDB()
     const sql = getDB()
-    const { name, type } = await req.json()
 
-    if (!name || !type || !['income', 'expense'].includes(type)) {
-      return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+    const body = await req.json().catch(() => null)
+    if (!body) return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 })
+
+    const parsed = categorySchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const id = generateId()
+    const { name, type } = parsed.data
+    const id = safeId()
+
     const rows = await sql`
-      INSERT INTO categories (id, name, type) VALUES (${id}, ${name.trim()}, ${type})
+      INSERT INTO categories (id, name, type) VALUES (${id}, ${name}, ${type})
       ON CONFLICT (name, type) DO NOTHING
       RETURNING id, name, type
     `
@@ -39,8 +47,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(rows[0], { status: 201 })
-  } catch (error) {
-    console.error('POST /api/categories error:', error)
-    return NextResponse.json({ error: 'Erro ao criar categoria' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDB, initDB } from '@/lib/db'
-
-function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-}
+import { requireSession } from '@/lib/api-auth'
+import { pluggyAccountSchema, safeId } from '@/lib/validate'
 
 export async function GET() {
+  const { error } = await requireSession()
+  if (error) return error
+
   try {
     await initDB()
     const sql = getDB()
@@ -16,23 +17,30 @@ export async function GET() {
       ORDER BY created_at DESC
     `
     return NextResponse.json(rows)
-  } catch (error) {
-    console.error('GET /api/pluggy/accounts error:', error)
-    return NextResponse.json({ error: 'Erro ao buscar contas' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }
 
 export async function POST(req: NextRequest) {
+  const { error } = await requireSession()
+  if (error) return error
+
   try {
     await initDB()
     const sql = getDB()
-    const { itemId, institutionName } = await req.json()
 
-    if (!itemId) {
-      return NextResponse.json({ error: 'itemId obrigatório' }, { status: 400 })
+    const body = await req.json().catch(() => null)
+    if (!body) return NextResponse.json({ error: 'Corpo inválido' }, { status: 400 })
+
+    const parsed = pluggyAccountSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0].message }, { status: 400 })
     }
 
-    const id = generateId()
+    const { itemId, institutionName } = parsed.data
+    const id = safeId()
+
     const rows = await sql`
       INSERT INTO connected_accounts (id, item_id, institution_name)
       VALUES (${id}, ${itemId}, ${institutionName ?? null})
@@ -40,8 +48,7 @@ export async function POST(req: NextRequest) {
       RETURNING id, item_id AS "itemId", institution_name AS "institutionName", last_synced_at AS "lastSyncedAt"
     `
     return NextResponse.json(rows[0], { status: 201 })
-  } catch (error) {
-    console.error('POST /api/pluggy/accounts error:', error)
-    return NextResponse.json({ error: 'Erro ao salvar conta' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
 }

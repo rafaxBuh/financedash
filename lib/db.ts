@@ -1,4 +1,5 @@
 import { neon, NeonQueryFunction } from '@neondatabase/serverless'
+import bcrypt from 'bcryptjs'
 
 // Cache the SQL client per process
 let _sql: NeonQueryFunction<false, false> | null = null
@@ -75,5 +76,17 @@ async function _runInit() {
   for (const name of defaultIncome) {
     const id = `inc-${name.toLowerCase().replace(/\s/g,'-')}`
     await sql`INSERT INTO categories (id, name, type) VALUES (${id}, ${name}, 'income') ON CONFLICT DO NOTHING`
+  }
+
+  // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
+  const adminEmail = process.env.ADMIN_EMAIL
+  const adminPassword = process.env.ADMIN_PASSWORD
+  if (adminEmail && adminPassword) {
+    const existing = await sql`SELECT id FROM users WHERE email = ${adminEmail} LIMIT 1`
+    if (existing.length === 0) {
+      const hash = await bcrypt.hash(adminPassword, 12)
+      const id = crypto.randomUUID()
+      await sql`INSERT INTO users (id, email, password_hash) VALUES (${id}, ${adminEmail}, ${hash}) ON CONFLICT DO NOTHING`
+    }
   }
 }
