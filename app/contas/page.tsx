@@ -114,7 +114,7 @@ export default function ContasPage() {
     <>
       {/* Load Pluggy script immediately — don't wait for accounts fetch */}
       <Script
-        src="https://cdn.pluggy.ai/connect/v2/pluggy-connect.js"
+        src="https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js"
         strategy="afterInteractive"
         onLoad={() => setScriptReady(true)}
         onReady={() => setScriptReady(true)}
