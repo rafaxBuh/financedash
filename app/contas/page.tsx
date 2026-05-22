@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import Script from 'next/script'
-import { Building2, Plus, Trash2, RefreshCw, CheckCircle } from 'lucide-react'
+import { Building2, Plus, Trash2, RefreshCw, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface ConnectedAccount {
   id: string
@@ -25,11 +25,21 @@ export default function ContasPage() {
   const [syncMessage, setSyncMessage] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [scriptReady, setScriptReady] = useState(false)
+  const [connectError, setConnectError] = useState('')
+
+  // Check for PluggyConnect on mount (handles cached script case)
+  useEffect(() => {
+    if (typeof window.PluggyConnect !== 'undefined') {
+      setScriptReady(true)
+    }
+  }, [])
 
   const loadAccounts = useCallback(() => {
     fetch('/api/pluggy/accounts')
       .then((r) => r.json())
-      .then(setAccounts)
+      .then((data) => {
+        if (Array.isArray(data)) setAccounts(data)
+      })
       .finally(() => setMounted(true))
   }, [])
 
@@ -37,15 +47,24 @@ export default function ContasPage() {
 
   async function handleConnect() {
     setConnecting(true)
+    setConnectError('')
     try {
       const res = await fetch('/api/pluggy/connect-token', { method: 'POST' })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? `Erro ${res.status}`)
+      }
       const { accessToken: token } = await res.json()
+
+      if (typeof window.PluggyConnect === 'undefined') {
+        throw new Error('Widget do Pluggy não carregou. Recarregue a página.')
+      }
 
       const widget = new window.PluggyConnect({
         connectToken: token,
         includeSandbox: true,
         onSuccess: async ({ item }: { item: { id: string; connector?: { name?: string } } }) => {
+          setConnecting(false)
           await fetch('/api/pluggy/accounts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -56,14 +75,17 @@ export default function ContasPage() {
           })
           loadAccounts()
         },
-        onError: (err: unknown) => {
+        onError: (err: { message?: string }) => {
           console.error('Pluggy Connect error:', err)
+          setConnectError(err?.message ?? 'Erro ao conectar banco.')
+          setConnecting(false)
         },
         onClose: () => setConnecting(false),
       })
       widget.init()
-    } catch {
-      alert('Erro ao abrir conexão bancária. Verifique as credenciais do Pluggy.')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro ao abrir conexão bancária.'
+      setConnectError(msg)
       setConnecting(false)
     }
   }
@@ -88,19 +110,15 @@ export default function ContasPage() {
     }
   }
 
-  if (!mounted) {
-    return (
-      <div className="p-8 flex items-center justify-center h-64">
-        <div className="text-text-muted text-sm">Carregando...</div>
-      </div>
-    )
-  }
-
   return (
     <>
+      {/* Load Pluggy script immediately — don't wait for accounts fetch */}
       <Script
         src="https://cdn.pluggy.ai/connect/v2/pluggy-connect.js"
+        strategy="afterInteractive"
+        onLoad={() => setScriptReady(true)}
         onReady={() => setScriptReady(true)}
+        onError={() => setConnectError('Falha ao carregar o widget do Pluggy.')}
       />
 
       <div className="p-6 lg:p-8 space-y-6">
@@ -126,13 +144,21 @@ export default function ContasPage() {
             <button
               onClick={handleConnect}
               disabled={connecting || !scriptReady}
-              className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+              title={!scriptReady ? 'Carregando widget...' : undefined}
+              className="flex items-center gap-2 px-4 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-wait"
             >
               <Plus className="w-4 h-4" />
-              {connecting ? 'Abrindo...' : 'Conectar banco'}
+              {connecting ? 'Abrindo...' : !scriptReady ? 'Carregando...' : 'Conectar banco'}
             </button>
           </div>
         </div>
+
+        {connectError && (
+          <div className="flex items-start gap-2 bg-danger/10 border border-danger/20 rounded-xl px-4 py-3 text-danger text-sm">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span>{connectError}</span>
+          </div>
+        )}
 
         {syncMessage && (
           <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-xl px-4 py-3 text-success text-sm">
@@ -141,7 +167,9 @@ export default function ContasPage() {
           </div>
         )}
 
-        {accounts.length === 0 ? (
+        {!mounted ? (
+          <div className="bg-surface border border-border rounded-xl p-8 animate-pulse h-40" />
+        ) : accounts.length === 0 ? (
           <div className="bg-surface border border-border rounded-xl p-12 flex flex-col items-center text-center gap-4">
             <div className="w-16 h-16 bg-surface-2 rounded-2xl flex items-center justify-center">
               <Building2 className="w-8 h-8 text-text-muted" />
@@ -155,10 +183,10 @@ export default function ContasPage() {
             <button
               onClick={handleConnect}
               disabled={connecting || !scriptReady}
-              className="flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
+              className="flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60 disabled:cursor-wait"
             >
               <Plus className="w-4 h-4" />
-              Conectar banco
+              {!scriptReady ? 'Carregando...' : 'Conectar banco'}
             </button>
           </div>
         ) : (
