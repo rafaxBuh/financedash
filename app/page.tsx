@@ -2,6 +2,9 @@ import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getDB, initDB } from '@/lib/db'
 import { processDueRecurring } from '@/lib/recurring'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import { Transaction } from '@/lib/types'
 import {
   getCurrentMonthTransactions,
@@ -61,6 +64,10 @@ function calcProgress(
 }
 
 export default async function DashboardPage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect('/login')
+  const userId = (session.user as { id: string }).id
+
   await initDB()
   await processDueRecurring()
   const sql = getDB()
@@ -70,18 +77,20 @@ export default async function DashboardPage() {
       SELECT id, description, amount, type, category,
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
-      FROM transactions WHERE deleted = FALSE ORDER BY date DESC, created_at DESC
+      FROM transactions WHERE deleted = FALSE AND user_id = ${userId} ORDER BY date DESC, created_at DESC
     `,
     sql`
       SELECT id, name, type, target_amount AS "targetAmount",
              category, to_char(deadline, 'YYYY-MM-DD') AS deadline,
              created_at AS "createdAt"
-      FROM goals ORDER BY created_at DESC LIMIT 4
+      FROM goals WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 4
     `,
     sql`
-      SELECT goal_id AS "goalId", COALESCE(SUM(amount), 0) AS total
-      FROM goal_contributions
-      GROUP BY goal_id
+      SELECT gc.goal_id AS "goalId", COALESCE(SUM(gc.amount), 0) AS total
+      FROM goal_contributions gc
+      JOIN goals g ON gc.goal_id = g.id
+      WHERE g.user_id = ${userId}
+      GROUP BY gc.goal_id
     `,
   ])
 

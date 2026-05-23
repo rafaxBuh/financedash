@@ -7,7 +7,7 @@ let _sql: NeonQueryFunction<false, false> | null = null
 export function getDB(): NeonQueryFunction<false, false> {
   if (!_sql) {
     const url = process.env.DATABASE_URL
-    if (!url) throw new Error('DATABASE_URL environment variable is not set')
+    if (!url) throw new Error('Erro de configuração do servidor: banco de dados não configurado')
     _sql = neon(url)
   }
   return _sql
@@ -117,6 +117,11 @@ async function _runInit() {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+
+  // Multi-tenancy: add user_id to all user-owned tables (safe on existing DBs)
+  await sql`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
+  await sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
+  await sql`ALTER TABLE recurring_transactions ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
 
   // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
   const adminEmail = process.env.ADMIN_EMAIL

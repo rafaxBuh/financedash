@@ -1,5 +1,8 @@
 import { getDB, initDB } from '@/lib/db'
 import { Transaction } from '@/lib/types'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 import MetasClient from './MetasClient'
 import {
   getTotalIncome,
@@ -69,6 +72,10 @@ function calcProgress(
 }
 
 export default async function MetasPage() {
+  const session = await getServerSession(authOptions)
+  if (!session?.user) redirect('/login')
+  const userId = (session.user as { id: string }).id
+
   await initDB()
   const sql = getDB()
 
@@ -77,19 +84,21 @@ export default async function MetasPage() {
       SELECT id, name, type, target_amount AS "targetAmount",
              category, to_char(deadline, 'YYYY-MM-DD') AS deadline,
              created_at AS "createdAt"
-      FROM goals ORDER BY created_at DESC
+      FROM goals WHERE user_id = ${userId} ORDER BY created_at DESC
     `,
     sql`
       SELECT id, description, amount, type, category,
              to_char(date, 'YYYY-MM-DD') AS date,
              created_at AS "createdAt"
-      FROM transactions WHERE deleted = FALSE ORDER BY date DESC
+      FROM transactions WHERE deleted = FALSE AND user_id = ${userId} ORDER BY date DESC
     `,
     sql`SELECT name, type FROM categories ORDER BY type, name`,
     sql`
-      SELECT goal_id AS "goalId", COALESCE(SUM(amount), 0) AS total
-      FROM goal_contributions
-      GROUP BY goal_id
+      SELECT gc.goal_id AS "goalId", COALESCE(SUM(gc.amount), 0) AS total
+      FROM goal_contributions gc
+      JOIN goals g ON gc.goal_id = g.id
+      WHERE g.user_id = ${userId}
+      GROUP BY gc.goal_id
     `,
   ])
 

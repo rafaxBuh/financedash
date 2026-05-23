@@ -7,9 +7,10 @@ import { getDB, initDB } from '@/lib/db'
 import { recurringSchema, safeId } from '@/lib/validate'
 import type { RecurringTransaction } from '@/lib/types'
 
-async function checkAuth() {
+async function getAuthUserId(): Promise<string> {
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) throw new Error('Não autorizado')
+  return (session.user as { id: string }).id
 }
 
 function revalidateAll() {
@@ -21,7 +22,7 @@ function revalidateAll() {
 export async function createRecurring(
   data: { description: string; amount: number; type: string; category: string; frequency: string; start_date: string }
 ): Promise<RecurringTransaction> {
-  await checkAuth()
+  const userId = await getAuthUserId()
 
   const parsed = recurringSchema.safeParse(data)
   if (!parsed.success) throw new Error(parsed.error.issues[0].message)
@@ -33,8 +34,8 @@ export async function createRecurring(
   const id = safeId()
 
   const rows = await sql`
-    INSERT INTO recurring_transactions (id, description, amount, type, category, frequency, start_date, next_date)
-    VALUES (${id}, ${description}, ${amount}, ${type}, ${category}, ${frequency}, ${start_date}, ${start_date})
+    INSERT INTO recurring_transactions (id, user_id, description, amount, type, category, frequency, start_date, next_date)
+    VALUES (${id}, ${userId}, ${description}, ${amount}, ${type}, ${category}, ${frequency}, ${start_date}, ${start_date})
     RETURNING id, description, amount, type, category, frequency,
               to_char(start_date, 'YYYY-MM-DD') AS "startDate",
               to_char(next_date,  'YYYY-MM-DD') AS "nextDate",
@@ -46,17 +47,29 @@ export async function createRecurring(
 }
 
 export async function toggleRecurring(id: string, active: boolean): Promise<void> {
-  await checkAuth()
+  const userId = await getAuthUserId()
   await initDB()
   const sql = getDB()
-  await sql`UPDATE recurring_transactions SET active = ${active} WHERE id = ${id}`
+
+  const result = await sql`
+    UPDATE recurring_transactions SET active = ${active}
+    WHERE id = ${id} AND user_id = ${userId}
+    RETURNING id
+  `
+  if (result.length === 0) throw new Error('Recorrente não encontrada')
+
   revalidateAll()
 }
 
 export async function deleteRecurring(id: string): Promise<void> {
-  await checkAuth()
+  const userId = await getAuthUserId()
   await initDB()
   const sql = getDB()
-  await sql`DELETE FROM recurring_transactions WHERE id = ${id}`
+
+  const result = await sql`
+    DELETE FROM recurring_transactions WHERE id = ${id} AND user_id = ${userId} RETURNING id
+  `
+  if (result.length === 0) throw new Error('Recorrente não encontrada')
+
   revalidateAll()
 }
