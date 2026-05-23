@@ -41,11 +41,22 @@ export default function TransactionForm({ onAdd }: Props) {
     setCategory('')
   }
 
+  function handleAmountChange(e: React.ChangeEvent<HTMLInputElement>) {
+    let val = e.target.value.replace(/\D/g, '')
+    if (val.length === 0) {
+      setAmount('')
+      return
+    }
+    const num = (parseInt(val, 10) / 100).toFixed(2)
+    const formatted = num.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+    setAmount(formatted)
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
-    const parsedAmount = parseFloat(amount.replace(',', '.'))
+    const parsedAmount = parseFloat(amount.replace(/\./g, '').replace(',', '.'))
     if (!description.trim()) { setError('Informe uma descrição.'); return }
     if (isNaN(parsedAmount) || parsedAmount <= 0) { setError('Informe um valor válido maior que zero.'); return }
     if (!date) { setError('Informe a data.'); return }
@@ -114,7 +125,7 @@ export default function TransactionForm({ onAdd }: Props) {
 
               <div>
                 <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Valor (R$)</label>
-                <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)}
+                <input type="text" inputMode="numeric" value={amount} onChange={handleAmountChange}
                   placeholder="0,00"
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" />
               </div>
