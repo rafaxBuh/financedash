@@ -64,6 +64,13 @@ export default function MetasClient({ initialGoals, categories }: Props) {
   const [contribError, setContribError] = useState('')
   const [contribLoading, setContribLoading] = useState(false)
 
+  function applyMask(e: React.ChangeEvent<HTMLInputElement>, setter: (v: string) => void) {
+    let val = e.target.value.replace(/\D/g, '')
+    if (!val) { setter(''); return }
+    const num = (parseInt(val, 10) / 100).toFixed(2)
+    setter(num.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.'))
+  }
+
   const needsCategory = type === 'expense_limit' || type === 'income_target'
   const filteredCategories = categories.filter((c) =>
     type === 'expense_limit' ? c.type === 'expense' : c.type === 'income'
@@ -72,7 +79,7 @@ export default function MetasClient({ initialGoals, categories }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFormError('')
-    const amount = parseFloat(targetAmount.replace(',', '.'))
+    const amount = parseFloat(targetAmount.replace(/\./g, '').replace(',', '.'))
     if (!name.trim()) { setFormError('Informe o nome da meta.'); return }
     if (isNaN(amount) || amount <= 0) { setFormError('Informe um valor válido.'); return }
 
@@ -113,7 +120,7 @@ export default function MetasClient({ initialGoals, categories }: Props) {
     e.preventDefault()
     if (!contributeGoal) return
     setContribError('')
-    const amount = parseFloat(contribAmount.replace(',', '.'))
+    const amount = parseFloat(contribAmount.replace(/\./g, '').replace(',', '.'))
     if (isNaN(amount) || amount <= 0) { setContribError('Informe um valor válido.'); return }
 
     setContribLoading(true)
@@ -303,9 +310,9 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                 </label>
                 <input
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   value={targetAmount}
-                  onChange={(e) => setTargetAmount(e.target.value)}
+                  onChange={(e) => applyMask(e, setTargetAmount)}
                   placeholder="0,00"
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
                 />
@@ -395,9 +402,9 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                 <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Valor (R$)</label>
                 <input
                   type="text"
-                  inputMode="decimal"
+                  inputMode="numeric"
                   value={contribAmount}
-                  onChange={(e) => setContribAmount(e.target.value)}
+                  onChange={(e) => applyMask(e, setContribAmount)}
                   placeholder="0,00"
                   autoFocus
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"

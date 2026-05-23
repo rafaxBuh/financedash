@@ -13,6 +13,7 @@ async function checkAuth() {
 
 function revalidateAll() {
   revalidatePath('/metas')
+  revalidatePath('/transacoes')
   revalidatePath('/')
 }
 
@@ -68,10 +69,27 @@ export async function addContribution(data: {
   await initDB()
   const sql = getDB()
 
-  const id = safeId()
+  const contributionDate = parsed.data.date ?? new Date().toISOString().split('T')[0]
+
+  // Fetch goal name for transaction description
+  const goalRows = await sql`SELECT name FROM goals WHERE id = ${data.goalId} LIMIT 1`
+  const goalName = goalRows[0]?.name ?? 'Meta'
+
+  // Insert contribution
+  const contribId = safeId()
   await sql`
     INSERT INTO goal_contributions (id, goal_id, amount, note, date)
-    VALUES (${id}, ${data.goalId}, ${parsed.data.amount}, ${parsed.data.note ?? null}, ${parsed.data.date ?? new Date().toISOString().split('T')[0]})
+    VALUES (${contribId}, ${data.goalId}, ${parsed.data.amount}, ${parsed.data.note ?? null}, ${contributionDate})
+  `
+
+  // Create an expense transaction so the amount leaves the balance
+  const txId = safeId()
+  const description = parsed.data.note?.trim()
+    ? `Meta: ${goalName} — ${parsed.data.note.trim()}`
+    : `Meta: ${goalName}`
+  await sql`
+    INSERT INTO transactions (id, description, amount, type, category, date)
+    VALUES (${txId}, ${description}, ${parsed.data.amount}, 'expense', 'Outros', ${contributionDate})
   `
 
   revalidateAll()
