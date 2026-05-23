@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { Transaction, TransactionType, Category } from '@/lib/types'
@@ -26,10 +26,6 @@ interface Props {
 export default function TransacoesClient({ initialTransactions, initialCategories }: Props) {
   const router = useRouter()
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
-
-  useEffect(() => {
-    setTransactions(initialTransactions)
-  }, [initialTransactions])
 
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState<TransactionType | 'all'>('all')
