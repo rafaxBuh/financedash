@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, Trash2, Target, TrendingUp, TrendingDown, PiggyBank, X, PlusCircle } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { GoalWithProgress } from './page'
+import { createGoal, deleteGoal, addContribution } from './actions'
 
 interface Props {
   initialGoals: GoalWithProgress[]
@@ -40,6 +41,10 @@ const STATUS_LABELS = {
 export default function MetasClient({ initialGoals, categories }: Props) {
   const router = useRouter()
   const [goals, setGoals] = useState<GoalWithProgress[]>(initialGoals)
+
+  useEffect(() => {
+    setGoals(initialGoals)
+  }, [initialGoals])
   const [showForm, setShowForm] = useState(false)
 
   // Goal form state
@@ -73,35 +78,27 @@ export default function MetasClient({ initialGoals, categories }: Props) {
 
     setFormLoading(true)
     try {
-      const res = await fetch('/api/goals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          type,
-          target_amount: amount,
-          category: needsCategory && category ? category : null,
-          deadline: deadline || null,
-        }),
+      await createGoal({
+        name: name.trim(),
+        type,
+        target_amount: amount,
+        category: needsCategory && category ? category : null,
+        deadline: deadline || null,
       })
-      if (!res.ok) {
-        const data = await res.json()
-        setFormError(data.error ?? 'Erro ao criar meta.')
-        return
-      }
       setName(''); setTargetAmount(''); setCategory(''); setDeadline(''); setType('savings')
       setShowForm(false)
       router.refresh()
-    } catch {
-      setFormError('Erro ao criar meta.')
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Erro ao criar meta.')
     } finally {
       setFormLoading(false)
     }
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/goals/${id}`, { method: 'DELETE' })
     setGoals((prev) => prev.filter((g) => g.id !== id))
+    await deleteGoal(id)
+    router.refresh()
   }
 
   function openContribute(goal: GoalWithProgress) {
@@ -121,24 +118,16 @@ export default function MetasClient({ initialGoals, categories }: Props) {
 
     setContribLoading(true)
     try {
-      const res = await fetch(`/api/goals/${contributeGoal.id}/contributions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          note: contribNote.trim() || undefined,
-          date: contribDate,
-        }),
+      await addContribution({
+        goalId: contributeGoal.id,
+        amount,
+        note: contribNote.trim() || undefined,
+        date: contribDate,
       })
-      if (!res.ok) {
-        const data = await res.json()
-        setContribError(data.error ?? 'Erro ao registrar contribuição.')
-        return
-      }
       setContributeGoal(null)
       router.refresh()
-    } catch {
-      setContribError('Erro ao registrar contribuição.')
+    } catch (err) {
+      setContribError(err instanceof Error ? err.message : 'Erro ao registrar contribuição.')
     } finally {
       setContribLoading(false)
     }
