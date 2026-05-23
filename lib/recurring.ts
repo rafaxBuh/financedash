@@ -21,7 +21,7 @@ export async function processDueRecurring(): Promise<void> {
     const today = format(new Date(), 'yyyy-MM-dd')
 
     const due = await sql`
-      SELECT id, description, amount, type, category, frequency,
+      SELECT id, user_id, description, amount, type, category, frequency,
              to_char(next_date, 'YYYY-MM-DD') AS next_date
       FROM recurring_transactions
       WHERE active = TRUE AND next_date <= ${today}
@@ -30,8 +30,8 @@ export async function processDueRecurring(): Promise<void> {
     for (const r of due) {
       const txId = safeId()
       await sql`
-        INSERT INTO transactions (id, description, amount, type, category, date)
-        VALUES (${txId}, ${r.description}, ${r.amount}, ${r.type}, ${r.category}, ${r.next_date})
+        INSERT INTO transactions (id, user_id, description, amount, type, category, date)
+        VALUES (${txId}, ${r.user_id}, ${r.description}, ${r.amount}, ${r.type}, ${r.category}, ${r.next_date})
       `
       const next = nextOccurrence(r.next_date as string, r.frequency as Frequency)
       await sql`
