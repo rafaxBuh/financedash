@@ -103,6 +103,21 @@ async function _runInit() {
     )
   `
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS recurring_transactions (
+      id TEXT PRIMARY KEY,
+      description TEXT NOT NULL,
+      amount NUMERIC(12, 2) NOT NULL,
+      type TEXT NOT NULL CHECK (type IN ('income', 'expense')),
+      category TEXT NOT NULL,
+      frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'yearly')),
+      start_date DATE NOT NULL,
+      next_date DATE NOT NULL,
+      active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
   // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
   const adminEmail = process.env.ADMIN_EMAIL
   const adminPassword = process.env.ADMIN_PASSWORD

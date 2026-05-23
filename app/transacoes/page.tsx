@@ -1,11 +1,13 @@
 import { getDB, initDB } from '@/lib/db'
 import { Transaction } from '@/lib/types'
+import { processDueRecurring } from '@/lib/recurring'
 import TransacoesClient from './TransacoesClient'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TransacoesPage() {
   await initDB()
+  await processDueRecurring()
   const sql = getDB()
 
   const [txRows, catRows] = await Promise.all([

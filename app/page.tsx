@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getDB, initDB } from '@/lib/db'
+import { processDueRecurring } from '@/lib/recurring'
 import { Transaction } from '@/lib/types'
 import {
   getCurrentMonthTransactions,
@@ -61,6 +62,7 @@ function calcProgress(
 
 export default async function DashboardPage() {
   await initDB()
+  await processDueRecurring()
   const sql = getDB()
 
   const [txRows, goalRows, contribRows] = await Promise.all([

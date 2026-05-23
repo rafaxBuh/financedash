@@ -58,6 +58,28 @@ export const INCOME_CATEGORIES: IncomeCategory[] = [
   'Outros',
 ]
 
+export type Frequency = 'daily' | 'weekly' | 'monthly' | 'yearly'
+
+export interface RecurringTransaction {
+  id: string
+  description: string
+  amount: number
+  type: TransactionType
+  category: string
+  frequency: Frequency
+  startDate: string
+  nextDate: string
+  active: boolean
+  createdAt: string
+}
+
+export const FREQUENCY_LABELS: Record<Frequency, string> = {
+  daily: 'Diária',
+  weekly: 'Semanal',
+  monthly: 'Mensal',
+  yearly: 'Anual',
+}
+
 export const CATEGORY_COLORS: Record<string, string> = {
   Alimentação: '#f97316',
   Transporte: '#3b82f6',

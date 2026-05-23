@@ -50,6 +50,18 @@ export const goalContributionSchema = z.object({
     .optional(),
 })
 
+export const recurringSchema = z.object({
+  description: z.string().trim().min(1, 'Descrição obrigatória').max(200, 'Descrição muito longa'),
+  amount: z
+    .number({ message: 'Valor inválido' })
+    .positive('Valor deve ser maior que zero')
+    .max(999_999_999, 'Valor muito alto'),
+  type: z.enum(['income', 'expense']),
+  category: z.string().trim().min(1, 'Categoria obrigatória').max(100),
+  frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (use YYYY-MM-DD)'),
+})
+
 export function safeId(): string {
   return crypto.randomUUID()
 }
