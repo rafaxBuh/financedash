@@ -7,7 +7,9 @@ export async function middleware(req: NextRequest) {
   // Public paths — never require auth
   if (
     pathname.startsWith('/login') ||
+    pathname.startsWith('/cadastro') ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/register') ||
     pathname.startsWith('/api/webhooks') ||
     pathname.startsWith('/_next') ||
     pathname === '/favicon.ico'
