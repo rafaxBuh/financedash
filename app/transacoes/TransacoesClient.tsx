@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, SlidersHorizontal } from 'lucide-react'
 import { Transaction, TransactionType, Category } from '@/lib/types'
 import { addTransaction, deleteTransaction } from '@/lib/storage'
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export default function TransacoesClient({ initialTransactions, initialCategories }: Props) {
+  const router = useRouter()
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
 
   const [search, setSearch] = useState('')
@@ -34,11 +36,13 @@ export default function TransacoesClient({ initialTransactions, initialCategorie
   async function handleAdd(data: Omit<Transaction, 'id' | 'createdAt'>) {
     const newTransaction = await addTransaction(data)
     setTransactions((prev) => [newTransaction, ...prev])
+    router.refresh()
   }
 
   async function handleDelete(id: string) {
     await deleteTransaction(id)
     setTransactions((prev) => prev.filter((t) => t.id !== id))
+    router.refresh()
   }
 
   const availableMonths = useMemo(() => getAvailableMonths(transactions), [transactions])
