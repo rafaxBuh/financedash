@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Trash2, Target, TrendingUp, TrendingDown, PiggyBank, X, PlusCircle } from 'lucide-react'
+import { Plus, Trash2, Target, TrendingUp, TrendingDown, PiggyBank, X, PlusCircle, Zap } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import type { GoalWithProgress } from './page'
 import { createGoal, deleteGoal, addContribution } from './actions'
@@ -199,6 +199,12 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {goal.type !== 'savings' && (
+                      <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-white/5 text-text-muted flex items-center gap-1" title="Atualizado automaticamente pelas suas transações">
+                        <Zap className="w-2.5 h-2.5" />
+                        Auto
+                      </span>
+                    )}
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       goal.status === 'completed' ? 'bg-success/20 text-success' :
                       goal.status === 'danger' ? 'bg-danger/20 text-danger' :
@@ -229,11 +235,11 @@ export default function MetasClient({ initialGoals, categories }: Props) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs">
                     <span className="text-text-muted">
-                      {goal.type === 'expense_limit' ? 'Gasto' : 'Acumulado'}:{' '}
+                      {goal.type === 'expense_limit' ? 'Gasto este mês' : goal.type === 'income_target' ? 'Recebido este mês' : 'Acumulado'}:{' '}
                       <span className="text-text-primary font-medium">{formatCurrency(goal.current)}</span>
                     </span>
                     <span className="text-text-muted">
-                      Meta: <span className="text-text-primary font-medium">{formatCurrency(Number(goal.targetAmount))}</span>
+                      {goal.type === 'expense_limit' ? 'Limite' : 'Meta'}: <span className="text-text-primary font-medium">{formatCurrency(Number(goal.targetAmount))}</span>
                     </span>
                   </div>
                   <div className="h-2 bg-surface-2 rounded-full overflow-hidden">

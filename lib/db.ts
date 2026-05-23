@@ -123,6 +123,15 @@ async function _runInit() {
   await sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
   await sql`ALTER TABLE recurring_transactions ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
 
+  // Data migration: if there is exactly one user, assign all orphan rows to them
+  const allUsers = await sql`SELECT id FROM users LIMIT 2`
+  if (allUsers.length === 1) {
+    const uid = allUsers[0].id
+    await sql`UPDATE transactions SET user_id = ${uid} WHERE user_id IS NULL`
+    await sql`UPDATE goals SET user_id = ${uid} WHERE user_id IS NULL`
+    await sql`UPDATE recurring_transactions SET user_id = ${uid} WHERE user_id IS NULL`
+  }
+
   // Create admin user from env vars (runs once — ON CONFLICT DO NOTHING)
   const adminEmail = process.env.ADMIN_EMAIL
   const adminPassword = process.env.ADMIN_PASSWORD
