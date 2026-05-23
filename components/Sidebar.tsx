@@ -17,7 +17,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
 
-  if (pathname === '/login') return null
+  if (pathname === '/login' || pathname === '/cadastro') return null
 
   return (
     <>
