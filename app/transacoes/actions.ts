@@ -35,6 +35,7 @@ export async function createTransaction(
   `
 
   revalidatePath('/transacoes')
+  revalidatePath('/')
   return { ...rows[0], amount: Number(rows[0].amount) } as Transaction
 }
 
@@ -48,4 +49,5 @@ export async function removeTransaction(id: string): Promise<void> {
 
   await sql`UPDATE transactions SET deleted = TRUE WHERE id = ${id}`
   revalidatePath('/transacoes')
+  revalidatePath('/')
 }
