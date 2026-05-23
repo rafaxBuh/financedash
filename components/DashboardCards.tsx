@@ -1,68 +1,81 @@
 'use client'
 
-import { Wallet, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react'
+import { Wallet, TrendingUp, TrendingDown, Percent } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 
 interface Props {
   balance: number
   totalIncome: number
   totalExpenses: number
+  savingsRate: number
 }
 
-export default function DashboardCards({ balance, totalIncome, totalExpenses }: Props) {
+export default function DashboardCards({ balance, totalIncome, totalExpenses, savingsRate }: Props) {
+  const isPositiveBalance = balance >= 0
+  const isPositiveSavings = savingsRate >= 0
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 animate-fade-up">
-      {/* Balance */}
-      <div className="glass-panel rounded-2xl p-6 flex items-start justify-between group hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(255,90,0,0.15)] hover:border-accent/30 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-        <div className="relative z-10">
-          <p className="text-text-secondary text-sm font-medium mb-2 uppercase tracking-wider">Saldo Total</p>
-          <p
-            className={`text-3xl font-bold tracking-tight ${
-              balance >= 0 ? 'text-white' : 'text-danger'
-            }`}
-          >
+    <div className="space-y-4">
+      {/* Hero: Saldo Total */}
+      <div className="glass-panel rounded-2xl p-6 lg:p-8 flex items-center justify-between gap-6 relative overflow-hidden group hover:border-accent/30 transition-all duration-300">
+        <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-transparent pointer-events-none" />
+        <div className="relative z-10 flex-1 min-w-0">
+          <p className="text-text-muted text-xs font-semibold uppercase tracking-widest mb-3">Saldo Total</p>
+          <p className={`text-4xl lg:text-5xl font-bold tracking-tight ${isPositiveBalance ? 'text-white' : 'text-danger'}`}>
             {formatCurrency(balance)}
           </p>
-          <p className="text-text-muted text-xs mt-2 font-medium">Receitas - Despesas</p>
+          <p className="text-text-muted text-sm mt-3">Soma de todas as receitas menos despesas</p>
         </div>
-        <div className="w-12 h-12 bg-accent/10 border border-accent/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_16px_rgba(255,90,0,0.2)]">
-          <Wallet className="w-6 h-6 text-accent" />
-        </div>
-      </div>
-
-      {/* Income */}
-      <div className="glass-panel rounded-2xl p-6 flex items-start justify-between group hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(0,255,136,0.15)] hover:border-success/30 relative overflow-hidden" style={{ animationDelay: '0.1s' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-        <div className="relative z-10">
-          <p className="text-text-secondary text-sm font-medium mb-2 uppercase tracking-wider">Receitas do Mês</p>
-          <p className="text-3xl font-bold tracking-tight text-white">{formatCurrency(totalIncome)}</p>
-          <p className="text-success text-xs mt-2 font-medium flex items-center gap-1">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            Mês atual
-          </p>
-        </div>
-        <div className="w-12 h-12 bg-success/10 border border-success/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_16px_rgba(0,255,136,0.2)]">
-          <TrendingUp className="w-6 h-6 text-success" />
+        <div className="relative z-10 flex-shrink-0 w-16 h-16 bg-accent/10 border border-accent/20 rounded-2xl flex items-center justify-center shadow-[0_0_24px_rgba(255,90,0,0.2)] group-hover:scale-105 transition-transform duration-300">
+          <Wallet className="w-8 h-8 text-accent" />
         </div>
       </div>
 
-      {/* Expenses */}
-      <div className="glass-panel rounded-2xl p-6 flex items-start justify-between group hover:-translate-y-1 transition-all duration-300 hover:shadow-[0_12px_32px_rgba(255,51,51,0.15)] hover:border-danger/30 relative overflow-hidden" style={{ animationDelay: '0.2s' }}>
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-        <div className="relative z-10">
-          <p className="text-text-secondary text-sm font-medium mb-2 uppercase tracking-wider">Despesas do Mês</p>
-          <p className="text-3xl font-bold tracking-tight text-white">{formatCurrency(totalExpenses)}</p>
-          <p className="text-danger text-xs mt-2 font-medium flex items-center gap-1">
-            <ArrowDownRight className="w-3.5 h-3.5" />
-            Mês atual
-          </p>
+      {/* 3 Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Receitas */}
+        <div className="glass-panel rounded-2xl p-5 flex items-start justify-between group hover:-translate-y-0.5 hover:border-success/30 transition-all duration-300">
+          <div>
+            <p className="text-text-muted text-xs font-semibold uppercase tracking-widest mb-2">Receitas</p>
+            <p className="text-2xl font-bold text-white tracking-tight">{formatCurrency(totalIncome)}</p>
+            <p className="text-text-muted text-xs mt-1.5">Este mês</p>
+          </div>
+          <div className="w-10 h-10 bg-success/10 border border-success/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <TrendingUp className="w-5 h-5 text-success" />
+          </div>
         </div>
-        <div className="w-12 h-12 bg-danger/10 border border-danger/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-[0_0_16px_rgba(255,51,51,0.2)]">
-          <TrendingDown className="w-6 h-6 text-danger" />
+
+        {/* Despesas */}
+        <div className="glass-panel rounded-2xl p-5 flex items-start justify-between group hover:-translate-y-0.5 hover:border-danger/30 transition-all duration-300">
+          <div>
+            <p className="text-text-muted text-xs font-semibold uppercase tracking-widest mb-2">Despesas</p>
+            <p className="text-2xl font-bold text-white tracking-tight">{formatCurrency(totalExpenses)}</p>
+            <p className="text-text-muted text-xs mt-1.5">Este mês</p>
+          </div>
+          <div className="w-10 h-10 bg-danger/10 border border-danger/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+            <TrendingDown className="w-5 h-5 text-danger" />
+          </div>
+        </div>
+
+        {/* Taxa de Economia */}
+        <div className="glass-panel rounded-2xl p-5 flex items-start justify-between group hover:-translate-y-0.5 transition-all duration-300"
+          style={{ '--hover-color': isPositiveSavings ? 'rgba(0,255,136,0.3)' : 'rgba(255,51,51,0.3)' } as React.CSSProperties}>
+          <div>
+            <p className="text-text-muted text-xs font-semibold uppercase tracking-widest mb-2">Taxa de Economia</p>
+            <p className={`text-2xl font-bold tracking-tight ${isPositiveSavings ? 'text-success' : 'text-danger'}`}>
+              {isPositiveSavings ? '+' : ''}{savingsRate}%
+            </p>
+            <p className="text-text-muted text-xs mt-1.5">
+              {savingsRate >= 20 ? 'Ótimo ritmo' : savingsRate >= 0 ? 'Dentro do limite' : 'Gastando mais que ganha'}
+            </p>
+          </div>
+          <div className={`w-10 h-10 border rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${
+            isPositiveSavings ? 'bg-success/10 border-success/20' : 'bg-danger/10 border-danger/20'
+          }`}>
+            <Percent className={`w-5 h-5 ${isPositiveSavings ? 'text-success' : 'text-danger'}`} />
+          </div>
         </div>
       </div>
     </div>
   )
 }
-

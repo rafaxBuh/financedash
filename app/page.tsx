@@ -99,28 +99,63 @@ export default async function DashboardPage() {
   const monthlyData = getMonthlyData(transactions)
   const categoryData = getCategoryExpenseData(currentMonth)
   const recent = sortTransactionsByDate(transactions).slice(0, 5)
+  const savingsRate = totalIncome > 0 ? Math.round(((totalIncome - totalExpenses) / totalIncome) * 100) : 0
+
+  const now = new Date()
+  const monthName = now.toLocaleString('pt-BR', { month: 'long' })
+  const year = now.getFullYear()
+  const monthLabel = monthName.charAt(0).toUpperCase() + monthName.slice(1) + ' ' + year
+
+  const healthBadge =
+    savingsRate >= 20
+      ? { label: 'Saúde financeira ótima', color: 'text-success bg-success/10 border-success/20' }
+      : savingsRate >= 0
+      ? { label: 'Saúde financeira ok', color: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' }
+      : { label: 'Atenção: gastos acima da renda', color: 'text-danger bg-danger/10 border-danger/20' }
 
   return (
     <div className="p-6 lg:p-10 space-y-8 animate-fade-up">
-      <div className="mb-8">
-        <h1 className="text-4xl lg:text-5xl font-bold tracking-tighter text-white mb-2">Dashboard</h1>
-        <p className="text-text-secondary text-base">Bem-vindo de volta! Aqui está a visão geral das suas finanças.</p>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <p className="text-text-muted text-xs font-semibold uppercase tracking-widest mb-1">{monthLabel}</p>
+          <h1 className="text-4xl lg:text-5xl font-bold tracking-tighter text-white">Dashboard</h1>
+        </div>
+        <span className={`self-start sm:self-auto text-xs font-semibold px-3 py-1.5 rounded-full border ${healthBadge.color}`}>
+          {healthBadge.label}
+        </span>
       </div>
 
-      <DashboardCards balance={balance} totalIncome={totalIncome} totalExpenses={totalExpenses} />
+      <DashboardCards balance={balance} totalIncome={totalIncome} totalExpenses={totalExpenses} savingsRate={savingsRate} />
 
       <DashboardCharts monthlyData={monthlyData} categoryData={categoryData} />
 
-      {goals.length > 0 && <GoalsSummary goals={goals} />}
-
-      <div className="glass-panel rounded-3xl p-6 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-bold text-xl tracking-tight">Transações Recentes</h2>
-          <Link href="/transacoes" className="text-accent hover:text-accent-hover text-sm font-semibold flex items-center gap-2 transition-all hover:translate-x-1">
-            Ver todas <ArrowRight className="w-4 h-4" />
-          </Link>
+      {/* Bottom 2-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        {/* Recent Transactions — wider */}
+        <div className="lg:col-span-3 glass-panel rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-white font-bold text-lg tracking-tight">Transações Recentes</h2>
+            <Link href="/transacoes" className="text-accent hover:text-accent-hover text-sm font-semibold flex items-center gap-1.5 transition-all hover:translate-x-1">
+              Ver todas <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <TransactionList transactions={recent} />
         </div>
-        <TransactionList transactions={recent} />
+
+        {/* Goals — narrower */}
+        {goals.length > 0 ? (
+          <div className="lg:col-span-2">
+            <GoalsSummary goals={goals} />
+          </div>
+        ) : (
+          <div className="lg:col-span-2 glass-panel rounded-2xl p-6 flex flex-col items-center justify-center text-center gap-3">
+            <p className="text-text-muted text-sm">Nenhuma meta criada ainda.</p>
+            <Link href="/metas" className="text-accent hover:text-accent-hover text-sm font-semibold transition-colors">
+              Criar meta →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

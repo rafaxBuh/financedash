@@ -12,15 +12,15 @@ interface Props {
 export default function DashboardCharts({ monthlyData, categoryData }: Props) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <div className="bg-surface border border-border rounded-xl p-5">
-        <h2 className="text-text-primary font-semibold text-sm mb-4">
-          Receitas vs Despesas (últimos 6 meses)
+      <div className="glass-panel rounded-2xl p-5 lg:p-6">
+        <h2 className="text-white font-semibold text-sm mb-4 uppercase tracking-widest">
+          Receitas vs Despesas
         </h2>
         <MonthlyBarChart data={monthlyData} />
       </div>
-      <div className="bg-surface border border-border rounded-xl p-5">
-        <h2 className="text-text-primary font-semibold text-sm mb-4">
-          Despesas por Categoria (mês atual)
+      <div className="glass-panel rounded-2xl p-5 lg:p-6">
+        <h2 className="text-white font-semibold text-sm mb-4 uppercase tracking-widest">
+          Despesas por Categoria
         </h2>
         <ExpensePieChart data={categoryData} />
       </div>
