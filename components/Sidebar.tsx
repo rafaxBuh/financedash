@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2, Target, RefreshCw } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2, Target, RefreshCw, Download } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +18,23 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const [installPrompt, setInstallPrompt] = useState<any>(null)
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault()
+      setInstallPrompt(e)
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setInstallPrompt(null)
+  }
 
   if (pathname === '/login' || pathname === '/cadastro') return null
 
@@ -63,6 +81,15 @@ export default function Sidebar() {
               </p>
             </div>
           )}
+          {installPrompt && (
+            <button
+              onClick={handleInstall}
+              className="flex items-center gap-3 w-full px-4 py-3 text-accent hover:bg-accent/10 rounded-xl text-sm font-semibold transition-all border border-accent/20 hover:border-accent/40"
+            >
+              <Download className="w-5 h-5 flex-shrink-0" />
+              Instalar app
+            </button>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="flex items-center gap-3 w-full px-4 py-3 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-xl text-sm font-semibold transition-all border border-transparent hover:border-danger/20"
@@ -81,13 +108,24 @@ export default function Sidebar() {
           </div>
           <span className="text-white font-bold text-lg tracking-tight">FinanceDash</span>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="text-text-secondary hover:text-danger transition-colors p-2"
-          aria-label="Sair"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          {installPrompt && (
+            <button
+              onClick={handleInstall}
+              className="text-accent hover:text-accent/80 transition-colors p-2"
+              aria-label="Instalar app"
+            >
+              <Download className="w-5 h-5" />
+            </button>
+          )}
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="text-text-secondary hover:text-danger transition-colors p-2"
+            aria-label="Sair"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Mobile Bottom Navigation Bar */}
