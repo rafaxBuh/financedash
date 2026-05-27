@@ -5,7 +5,6 @@ import Sidebar from '@/components/Sidebar'
 import SessionProvider from '@/components/SessionProvider'
 import CursorScript from '@/components/CursorScript'
 import PWARegister from '@/components/PWARegister'
-import PWADebug from '@/components/PWADebug'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -34,7 +33,6 @@ export default function RootLayout({
       <body className={`${inter.className} bg-background text-text-primary min-h-screen relative`}>
         <CursorScript />
         <PWARegister />
-        <PWADebug />
         
         {/* Custom Cursors */}
         <div id="cursor" className="hidden lg:block"></div>

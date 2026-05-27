@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
-import { LayoutDashboard, ArrowLeftRight, TrendingUp, LogOut, Tag, Building2, Target, RefreshCw, Download } from 'lucide-react'
+import { LayoutDashboard, ArrowLeftRight, LogOut, Tag, Building2, Target, RefreshCw, Download } from 'lucide-react'
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 const navItems = [
@@ -44,9 +45,7 @@ export default function Sidebar() {
       <aside className="hidden lg:flex w-60 fixed inset-y-6 left-4 z-30 glass-panel rounded-2xl flex-col">
         {/* Logo */}
         <div className="px-6 py-8 border-b border-glass-border flex items-center gap-3">
-          <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-[0_0_24px_rgba(255,90,0,0.4)]">
-            <TrendingUp className="w-5 h-5 text-white" />
-          </div>
+          <Image src="/icons/icon-192x192.png" alt="FinanceDash" width={40} height={40} className="rounded-xl shadow-[0_0_24px_rgba(255,90,0,0.4)]" />
           <span className="text-white font-bold text-xl tracking-tight">FinanceDash</span>
         </div>
 
@@ -103,9 +102,7 @@ export default function Sidebar() {
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 glass-panel border-x-0 border-t-0 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center shadow-[0_0_16px_rgba(255,90,0,0.4)]">
-            <TrendingUp className="w-4 h-4 text-white" />
-          </div>
+          <Image src="/icons/icon-192x192.png" alt="FinanceDash" width={32} height={32} className="rounded-lg shadow-[0_0_16px_rgba(255,90,0,0.4)]" />
           <span className="text-white font-bold text-lg tracking-tight">FinanceDash</span>
         </div>
         <div className="flex items-center gap-1">
