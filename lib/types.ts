@@ -69,6 +69,7 @@ export interface RecurringTransaction {
   frequency: Frequency
   startDate: string
   nextDate: string
+  endDate: string | null
   active: boolean
   createdAt: string
 }

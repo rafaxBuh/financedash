@@ -31,6 +31,7 @@ export default function RecorrentesClient({ initialRecurring, initialCategories 
   const [category, setCategory] = useState('')
   const [frequency, setFrequency] = useState<Frequency>('monthly')
   const [startDate, setStartDate] = useState(today)
+  const [endDate, setEndDate] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -50,7 +51,7 @@ export default function RecorrentesClient({ initialRecurring, initialCategories 
 
   function resetForm() {
     setDescription(''); setAmount(''); setType('expense')
-    setCategory(''); setFrequency('monthly'); setStartDate(today)
+    setCategory(''); setFrequency('monthly'); setStartDate(today); setEndDate('')
     setError('')
   }
 
@@ -67,6 +68,7 @@ export default function RecorrentesClient({ initialRecurring, initialCategories 
       const newItem = await createRecurring({
         description: description.trim(), amount: parsedAmount,
         type, category, frequency, start_date: startDate,
+        end_date: endDate || null,
       })
       setItems((prev) => [newItem, ...prev])
       resetForm()
@@ -192,11 +194,21 @@ export default function RecorrentesClient({ initialRecurring, initialCategories 
                 </select>
               </div>
 
-              {/* Start Date */}
-              <div>
-                <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Data de início</label>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent [color-scheme:dark]" />
+              {/* Start Date + End Date */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">Data de início</label>
+                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent [color-scheme:dark]" />
+                </div>
+                <div>
+                  <label className="block text-text-secondary text-xs font-medium mb-2 uppercase tracking-wide">
+                    Término <span className="text-text-muted normal-case">(opcional)</span>
+                  </label>
+                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate}
+                    className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent [color-scheme:dark]" />
+                </div>
               </div>
 
               {error && (
@@ -240,6 +252,7 @@ function Section({
             <p className="text-white text-sm font-semibold truncate">{item.description}</p>
             <p className="text-text-muted text-xs mt-0.5">
               {item.category} · {FREQUENCY_LABELS[item.frequency]} · próxima: {formatDate(item.nextDate)}
+              {item.endDate && <span className="text-text-muted/70"> · até {formatDate(item.endDate)}</span>}
             </p>
           </div>
 

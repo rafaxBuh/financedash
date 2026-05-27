@@ -60,6 +60,11 @@ export const recurringSchema = z.object({
   category: z.string().trim().min(1, 'Categoria obrigatória').max(100),
   frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
   start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (use YYYY-MM-DD)'),
+  end_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (use YYYY-MM-DD)')
+    .nullable()
+    .optional(),
 })
 
 export function safeId(): string {

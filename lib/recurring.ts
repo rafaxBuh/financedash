@@ -22,21 +22,37 @@ export async function processDueRecurring(): Promise<void> {
 
     const due = await sql`
       SELECT id, user_id, description, amount, type, category, frequency,
-             to_char(next_date, 'YYYY-MM-DD') AS next_date
+             to_char(next_date, 'YYYY-MM-DD') AS next_date,
+             to_char(end_date,  'YYYY-MM-DD') AS end_date
       FROM recurring_transactions
       WHERE active = TRUE AND next_date <= ${today}
     `
 
     for (const r of due) {
+      const endDate = r.end_date as string | null
+
+      // If end_date passed, deactivate without generating a transaction
+      if (endDate && r.next_date > endDate) {
+        await sql`UPDATE recurring_transactions SET active = FALSE WHERE id = ${r.id}`
+        continue
+      }
+
       const txId = safeId()
       await sql`
         INSERT INTO transactions (id, user_id, description, amount, type, category, date)
         VALUES (${txId}, ${r.user_id}, ${r.description}, ${r.amount}, ${r.type}, ${r.category}, ${r.next_date})
       `
+
       const next = nextOccurrence(r.next_date as string, r.frequency as Frequency)
-      await sql`
-        UPDATE recurring_transactions SET next_date = ${next} WHERE id = ${r.id}
-      `
+
+      // If next occurrence is past end_date, deactivate instead of scheduling another
+      if (endDate && next > endDate) {
+        await sql`
+          UPDATE recurring_transactions SET next_date = ${next}, active = FALSE WHERE id = ${r.id}
+        `
+      } else {
+        await sql`UPDATE recurring_transactions SET next_date = ${next} WHERE id = ${r.id}`
+      }
     }
   } catch {
     // Silently skip if table not yet created

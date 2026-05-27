@@ -22,6 +22,7 @@ export default async function RecorrentesPage() {
       SELECT id, description, amount, type, category, frequency,
              to_char(start_date, 'YYYY-MM-DD') AS "startDate",
              to_char(next_date,  'YYYY-MM-DD') AS "nextDate",
+             to_char(end_date,   'YYYY-MM-DD') AS "endDate",
              active, created_at AS "createdAt"
       FROM recurring_transactions
       WHERE user_id = ${userId}

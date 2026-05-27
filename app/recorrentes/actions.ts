@@ -20,7 +20,7 @@ function revalidateAll() {
 }
 
 export async function createRecurring(
-  data: { description: string; amount: number; type: string; category: string; frequency: string; start_date: string }
+  data: { description: string; amount: number; type: string; category: string; frequency: string; start_date: string; end_date?: string | null }
 ): Promise<RecurringTransaction> {
   const userId = await getAuthUserId()
 
@@ -30,15 +30,24 @@ export async function createRecurring(
   await initDB()
   const sql = getDB()
 
-  const { description, amount, type, category, frequency, start_date } = parsed.data
+  const { description, amount, type, category, frequency, start_date, end_date } = parsed.data
+
+  if (end_date && end_date <= start_date) {
+    throw new Error('A data de término deve ser posterior à data de início')
+  }
+
   const id = safeId()
+  const today = new Date().toISOString().split('T')[0]
+  // next_date starts from today if start_date is in the past (prevents retroactive generation)
+  const next_date = start_date < today ? today : start_date
 
   const rows = await sql`
-    INSERT INTO recurring_transactions (id, user_id, description, amount, type, category, frequency, start_date, next_date)
-    VALUES (${id}, ${userId}, ${description}, ${amount}, ${type}, ${category}, ${frequency}, ${start_date}, ${start_date})
+    INSERT INTO recurring_transactions (id, user_id, description, amount, type, category, frequency, start_date, next_date, end_date)
+    VALUES (${id}, ${userId}, ${description}, ${amount}, ${type}, ${category}, ${frequency}, ${start_date}, ${next_date}, ${end_date ?? null})
     RETURNING id, description, amount, type, category, frequency,
               to_char(start_date, 'YYYY-MM-DD') AS "startDate",
               to_char(next_date,  'YYYY-MM-DD') AS "nextDate",
+              to_char(end_date,   'YYYY-MM-DD') AS "endDate",
               active, created_at AS "createdAt"
   `
 

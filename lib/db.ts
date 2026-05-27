@@ -123,6 +123,9 @@ async function _runInit() {
   await sql`ALTER TABLE goals ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
   await sql`ALTER TABLE recurring_transactions ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE CASCADE`
 
+  // End date support for recurring transactions
+  await sql`ALTER TABLE recurring_transactions ADD COLUMN IF NOT EXISTS end_date DATE`
+
   // Data migration: if there is exactly one user, assign all orphan rows to them
   const allUsers = await sql`SELECT id FROM users LIMIT 2`
   if (allUsers.length === 1) {
