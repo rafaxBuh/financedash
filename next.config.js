@@ -30,6 +30,14 @@ const securityHeaders = [
 ]
 
 const nextConfig = {
+  experimental: {
+    // Desativa o router cache client-side para páginas dinâmicas.
+    // Sem isso, Next.js serve a versão em memória por 30s mesmo com force-dynamic,
+    // fazendo dados recém-salvos não aparecerem ao navegar entre abas.
+    staleTimes: {
+      dynamic: 0,
+    },
+  },
   async headers() {
     return [
       {
