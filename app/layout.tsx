@@ -1,15 +1,26 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Sidebar from '@/components/Sidebar'
 import SessionProvider from '@/components/SessionProvider'
 import CursorScript from '@/components/CursorScript'
+import PWARegister from '@/components/PWARegister'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'FinanceDash - Controle Financeiro Pessoal',
   description: 'Gerencie suas finanças pessoais com facilidade',
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'FinanceDash',
+  },
+}
+
+export const viewport: Viewport = {
+  themeColor: '#ff5a00',
 }
 
 export default function RootLayout({
@@ -21,6 +32,7 @@ export default function RootLayout({
     <html lang="pt-BR">
       <body className={`${inter.className} bg-background text-text-primary min-h-screen relative`}>
         <CursorScript />
+        <PWARegister />
         
         {/* Custom Cursors */}
         <div id="cursor" className="hidden lg:block"></div>
