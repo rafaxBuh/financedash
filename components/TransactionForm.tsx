@@ -1,22 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Transaction, TransactionType } from '@/lib/types'
 
-interface Props {
-  onAdd: (data: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>
-}
-
-interface Category {
+interface CategoryItem {
   id: string
   name: string
-  type: 'income' | 'expense'
+  type: string
+}
+
+interface Props {
+  onAdd: (data: Omit<Transaction, 'id' | 'createdAt'>) => Promise<void>
+  categories: CategoryItem[]
 }
 
 const today = new Date().toISOString().split('T')[0]
 
-export default function TransactionForm({ onAdd }: Props) {
+export default function TransactionForm({ onAdd, categories }: Props) {
   const [open, setOpen] = useState(false)
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
@@ -25,16 +26,8 @@ export default function TransactionForm({ onAdd }: Props) {
   const [date, setDate] = useState(today)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [allCategories, setAllCategories] = useState<Category[]>([])
 
-  useEffect(() => {
-    fetch('/api/categories')
-      .then((r) => r.json())
-      .then(setAllCategories)
-      .catch(() => {})
-  }, [])
-
-  const categories = allCategories.filter((c) => c.type === type).map((c) => c.name)
+  const filteredCategories = categories.filter((c) => c.type === type).map((c) => c.name)
 
   function handleTypeChange(newType: TransactionType) {
     setType(newType)
@@ -135,7 +128,7 @@ export default function TransactionForm({ onAdd }: Props) {
                 <select value={category} onChange={(e) => setCategory(e.target.value)}
                   className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2.5 text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent">
                   <option value="">Selecione...</option>
-                  {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {filteredCategories.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 

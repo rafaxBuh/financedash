@@ -80,7 +80,7 @@ export default function TransacoesClient({ initialTransactions, initialCategorie
             {transactions.length} transaç{transactions.length !== 1 ? 'ões' : 'ão'} no total
           </p>
         </div>
-        <TransactionForm onAdd={handleAdd} />
+        <TransactionForm onAdd={handleAdd} categories={initialCategories} />
       </div>
 
       <div className="bg-surface border border-border rounded-xl p-4 space-y-4">
